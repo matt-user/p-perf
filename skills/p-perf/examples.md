@@ -2,7 +2,7 @@
 
 Before → after snippets for Pinocchio CU work. Keep edits surgical; match the target crate’s APIs.
 
-**Sources:** [Dean Little / Laugharne transcript](https://github.com/Laugharne/solana_optimized_programs), [Blueshift Performance](https://learn.blueshift.gg/en/courses/pinocchio-for-dummies/performance), [JIT intrinsics](https://blueshift.gg/research/accelerating-svm-with-jit-intrinsics), [u128 libcalls](https://blueshift.gg/research/accelerating-u128-math-with-libcalls-and-jit-intrinsics), [memops libcalls](https://blueshift.gg/research/fully-unlocking-memory-performance-in-svm-via-libcalls-and-beyond).
+**Sources:** [Dean Little / Laugharne transcript](https://github.com/Laugharne/solana_optimized_programs), [Blueshift Performance](https://learn.blueshift.gg/en/courses/pinocchio-for-dummies/performance), [u128 research](https://blueshift.gg/research/accelerating-u128-math-with-libcalls-and-jit-intrinsics).
 
 ---
 
@@ -214,42 +214,7 @@ struct AccountInfoView<'a> {
 
 ---
 
-## 10a. Libcall override — custom `memcmp` (available)
-
-Call sites stay normal Rust equality; the linker picks up a strong local `memcmp`:
-
-```rust
-// No change at use sites — e.g. `[u8; 32] == expected` still lowers to memcmp
-pub unsafe extern "C" fn memcmp(a: *const u8, b: *const u8, n: usize) -> i32 {
-    // Bind sol_memcmp_ as your toolchain exposes it (syscall for large n)
-    if n > 64 {
-        return sol_memcmp_(a, b, n);
-    }
-
-    let mut i = 0usize;
-    while i + 8 <= n {
-        let wa = core::ptr::read_unaligned(a.add(i) as *const u64);
-        let wb = core::ptr::read_unaligned(b.add(i) as *const u64);
-        if wa != wb {
-            return 1;
-        }
-        i += 8;
-    }
-    while i < n {
-        if *a.add(i) != *b.add(i) {
-            return 1;
-        }
-        i += 1;
-    }
-    0
-}
-```
-
-Constant `n` is often inlined/unrolled so the threshold branch disappears. Prefer this when hot fixed-size memops dominate CU; wire `sol_memcmp_` to the crate’s real binding.
-
----
-
-## 10b. u128 mul — soft expand vs intrinsic (research)
+## 10. u128 mul — soft expand vs intrinsic (awareness)
 
 Hot path using plain Rust `u128` mul (may expand to dozens of BPF ops / `__multi3`):
 
@@ -259,4 +224,4 @@ fn calculate_invariant(a: u128, b: u128) -> u128 {
 }
 ```
 
-Blueshift research prototypes a libcall override that maps `__multi3` → `sol_multi3` JIT intrinsic (~4× fewer CU / ~2× wall-clock in their **prototype** bench — not a mainnet guarantee). **Do not rewrite call sites or ship fake wrappers unless the deployed toolchain/SVM exposes that intrinsic.** Flag the hot path and document the dependency.
+Blueshift research prototypes a libcall override that maps `__multi3` → `sol_multi3` JIT intrinsic (~4x fewer CU in their bench). **Do not rewrite call sites unless the deployed toolchain/SVM exposes that intrinsic.** Prefer flagging the hot path and documenting the dependency.

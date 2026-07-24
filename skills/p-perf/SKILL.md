@@ -47,7 +47,7 @@ Note how CU is measured in-repo (mollusk, liteSVM, benches, CU asserts). If none
 5. Superfluous checks: drop pre-CPI balance/owner checks the callee enforces; gate logs/extra validates behind `#[cfg(not(feature = "perf"))]`
 6. ATAs: do not `init-if-needed` in hot paths; verify by deriving the expected address
 7. Bitflags: pack booleans into `u8` bitfields on-chain
-8. Libcalls / math: suggest `memcmp`-style libcall overrides when hot memops show up; flag expensive `u128` mul soft-expand paths and JIT-intrinsic research (`sol_multi3`, etc.) — apply intrinsic wrappers only when the user’s toolchain/SVM is known to support them
+8. Math: flag expensive `u128` mul soft-expand paths; note Blueshift `sol_multi3` research — only apply when the toolchain supports it
 
 Read [patterns.md](patterns.md), [examples.md](examples.md), and [anti-patterns.md](anti-patterns.md) as needed.
 

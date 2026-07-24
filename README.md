@@ -31,9 +31,7 @@ Techniques are curated from:
 
 - [Scale or Die — Writing Optimized Solana Programs (Dean Little / Blueshift)](https://github.com/Laugharne/solana_optimized_programs)
 - [Pinocchio for Dummies — Performance (Blueshift)](https://learn.blueshift.gg/en/courses/pinocchio-for-dummies/performance)
-- [Accelerating the SVM with JIT Intrinsics (Blueshift Research)](https://blueshift.gg/research/accelerating-svm-with-jit-intrinsics)
 - [Accelerating u128 Math with Libcalls and JIT Intrinsics (Blueshift Research)](https://blueshift.gg/research/accelerating-u128-math-with-libcalls-and-jit-intrinsics)
-- [Unlocking SVM-Optimal MemOps (Blueshift Research)](https://blueshift.gg/research/fully-unlocking-memory-performance-in-svm-via-libcalls-and-beyond)
 
 ## License
 

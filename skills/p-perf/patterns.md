@@ -147,40 +147,6 @@ struct AccountView<'a> {
 
 Limits: ~4KB stack per frame, ~32KB heap per execution. Use Pinocchio `no_allocator!()` when the program must never allocate; otherwise `default_allocator!()`.
 
-## Libcalls and JIT intrinsics
+## u128 multiply (toolchain-dependent)
 
-Mental model: Rust op → LLVM libcall → (optional strong override in your crate) → optional `CALL_IMM` JIT intrinsic (native x86 in the SVM, no syscall exit). Same mechanics apply to any Pinocchio `no_std` program — no Pinocchio-specific API.
-
-**Do not invent syscalls or IMM hashes.** Claim mainnet support for `sol_multi3` / similar only when the user’s toolchain and SVM are known to expose them.
-
-### Libcall override (available today)
-
-`compiler-builtins` defines libcalls as weak symbols. A strong local `extern "C"` definition wins at link time and controls lowering without forking the compiler.
-
-Recipe: ship a custom `memcmp` (wide 64-bit loads; for large `n`, threshold to the existing `sol_memcmp_` syscall). Constant sizes inline/unroll; the branch is often compile-time eliminated. Suggest this when hot `[u8; N]` equality or similar memops show up in CU profiles. See examples 10a and Blueshift memops research.
-
-### Explicit JIT wrapper (runtime-gated)
-
-If the SVM recognizes a reserved `CALL_IMM` imm (Murmur3 of the intrinsic name), expose it as a thin wrapper — **only when that runtime is confirmed**:
-
-```rust
-#[inline(always)]
-pub fn u64_wide_mul(a: u64, b: u64) -> u128 {
-    let mut result = core::mem::MaybeUninit::<u128>::uninit();
-    // murmur3("sol_u64_wide_mul") — prototype IMM from Blueshift research; not a public API guarantee
-    let sol_u64_wide_mul: unsafe extern "C" fn(*mut u128, u64, u64) -> u64 =
-        unsafe { core::mem::transmute(0x61BAE2E8usize) };
-    unsafe {
-        sol_u64_wide_mul(result.as_mut_ptr(), a, b);
-        result.assume_init()
-    }
-}
-```
-
-Do not auto-apply this pattern or invent new hashes.
-
-### `__multi3` → `sol_multi3` (research / runtime-gated)
-
-Plain `u128` mul on BPF often expands to slow LLVM soft-mul (`__multi3`). Blueshift prototypes overriding `__multi3` to call a `sol_multi3` JIT intrinsic (~4× fewer CU / ~2× wall-clock in their bench — **prototype numbers, not mainnet guarantees**). Call sites stay `a * b`; the override is transparent.
-
-**Agent behavior:** flag hot `u128` mul paths (P1/P2 awareness). Do not rewrite call sites or ship `__multi3` overrides unless the deployed toolchain/SVM exposes `sol_multi3`.
+Plain `u128` mul on BPF often expands to slow LLVM soft-mul (`__multi3`). Blueshift research shows overriding via libcalls + a `sol_multi3` JIT intrinsic can cut CU ~4x and wall time ~2x — **only apply when the target toolchain/runtime provides that intrinsic**. Do not invent syscalls. Flag hot `u128` paths and document the dependency.
