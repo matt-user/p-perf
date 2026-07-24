@@ -12,7 +12,9 @@ Primary sources for this skill. Re-read when applying advanced or toolchain-spec
 
 ## Research
 
+- [Accelerating the SVM with JIT Intrinsics](https://blueshift.gg/research/accelerating-svm-with-jit-intrinsics) — Claire Fan (Blueshift), Jan 2026. `CALL_IMM` → native x86 without syscall exit; explicit Rust wrappers via Murmur3 IMM (e.g. `sol_u64_wide_mul`). Runtime-gated.
 - [Accelerating u128 Math with Libcalls and JIT Intrinsics](https://blueshift.gg/research/accelerating-u128-math-with-libcalls-and-jit-intrinsics) — Claire Fan (Blueshift), Jan 2026. Custom `__multi3` libcalls + `sol_multi3` JIT intrinsic vs LLVM soft expand. Treat as research/toolchain-dependent unless the runtime exposes the intrinsic.
+- [Unlocking SVM-Optimal MemOps](https://blueshift.gg/research/fully-unlocking-memory-performance-in-svm-via-libcalls-and-beyond) — Bretas / Fan (Blueshift), Mar 2026. Practical **available-today** path: override `memcmp` (and similar) with strong local libcalls; no new SVM ops required.
 
 ## Related tooling (optional)
 

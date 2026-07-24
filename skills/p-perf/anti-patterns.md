@@ -30,8 +30,16 @@ Strip or avoid these unless the user explicitly needs them for safety/UX.
 ## On-chain state
 
 - [ ] Multiple `bool` fields instead of a bitflag `u8` when packing matters
-- [ ] Hot `u128` arithmetic without awareness of BPF soft-mul cost (see patterns; do not invent syscalls)
+- [ ] Hot `u128` arithmetic without awareness of BPF soft-mul cost (flag only; see patterns)
+
+## Libcalls / JIT intrinsics
+
+- [ ] Inventing or hardcoding JIT IMM hashes / `sol_*` intrinsics not present in the target SVM
+- [ ] Shipping `__multi3` (or similar) overrides that call nonexistent intrinsics
+- [ ] Treating Blueshift prototype CU / wall-clock numbers as guaranteed on mainnet
+- [ ] Claiming mainnet support for `sol_multi3` without confirming toolchain + runtime
 
 ## Escalation (out of default scope)
 
 - [ ] Jumping to sBPF assembly for marginal CU wins without an explicit user request
+- [ ] Auto-applying runtime-gated JIT wrappers when only an awareness finding is warranted
